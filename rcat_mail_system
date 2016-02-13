@@ -325,6 +325,12 @@ function install {
     		echo "Error: Default domain can't be empty!!"
     	fi
     done
+    #change hostname
+    sed -i '/HOSTNAME/d' /etc/sysconfig/network
+    echo "HOSTNAME=${hostname}" >> /etc/sysconfig/network
+    echo "127.0.0.1 ${hostname}" >> /etc/hosts
+    hostname ${hostname}
+    restart_service network
     #install mail system
     update_check
     install_postfix
