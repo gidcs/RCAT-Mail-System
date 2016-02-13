@@ -90,9 +90,19 @@ function check_if_ssl_exists {
 }
 
 function check_if_ssl_valid {
-    crtmd5=`openssl x509 -noout -modulus -in server.crt | openssl md5`
-    keymd5=`openssl rsa -noout -modulus -in server.key | openssl md5`
-    if [ "$crtmd5" == "$keymd5" ]; then
+    crtstring=`openssl x509 -noout -modulus -in server.crt`
+    if [ "${crtstring}" == "" ]; then
+        echo "Error: CRT is invalid."
+        exit 1
+    fi
+    keystring=`openssl x509 -noout -modulus -in server.crt`
+    if [ "${keystring}" == "" ]; then
+        echo "Error: Key is invalid."
+        exit 1
+    fi
+    crtmd5=`echo ${crtstring} | openssl md5`
+    keymd5=`echo ${keystring} | openssl md5`
+    if [ "${crtmd5}" == "${keymd5}" ]; then
         echo "SSL is valid."
     else
         echo "Error: SSL is invalid."
