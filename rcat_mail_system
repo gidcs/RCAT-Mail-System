@@ -101,7 +101,7 @@ function check_if_ssl_valid {
         exit 1
     fi
     if_same=`diff -q server.crt server.key`
-    if [ "${if_same}" != "" ]; then
+    if [ "${if_same}" == "" ]; then
         echo "Error: CRT and Key are same file."
         exit 1
     fi
