@@ -1,0 +1,543 @@
+#!/bin/bash
+# RCAT Mail System for CentOS
+# Powered rcat.gidcs.net
+# rcat_mail_system
+#
+# SMTP : 25
+# SMTPs: 465 (SSL/TLS) -- smtpd
+# SMTPs: 587 (STARTTLS) -- submission
+#
+# IMAP : 143
+# IMAPs: 143 (STARTTLS) / 993 (SSL/TLS)
+#
+# POP3 : 110
+# POP3s: 110 (STARTTLS) / 995 (SSL/TLS)
+
+main_url="https://raw.githubusercontent.com/gidcs/RCAT-Mail-System/master/"
+rcat_mail_system="/etc/rcat/rcat_mail_system"
+
+function check_if_root {
+    # Check if user is root
+    if [ $(id -u) != "0" ]; then
+        echo "Error: You must be root to run this script, use sudo $0"
+        exit 1
+    fi
+}
+
+function check_if_centos {
+    #check if CentOS
+    if [ ! -e '/etc/redhat-release' ]; then
+    	echo 'Error: sorry, we currently support CentOS only'
+    	exit 1
+    fi
+}
+
+function echoline {
+	echo "========================================================================="
+}
+
+function restart_service {
+    service $1 restart
+    if [ "$?" -ne 0 ]; then
+    	echo "Error: $1 restart failed"
+    	exit 1
+    fi
+}
+
+function copy_backup {
+    copy_file=$1
+    cp ${copy_file} ${copy_file}.ORI
+}
+
+function move_backup {
+    move_file=$1
+    mv ${move_file} ${move_file}.ORI
+}
+
+function wget_file {
+    target_file=$1
+    req_file=$2
+    wget -O ${target_file} "${main_url}/${req_file}"
+    if [ ! -f ${target_file} ]; then
+    	echo "Error: ${target_file} download failed."
+    	exit 1
+    fi
+}
+
+function comment_line {
+    comment_file=$1
+    comment_string=$2
+    sed -i 's/'"${comment_string}"'/\#'"${comment_string}"'/g' ${comment_file}
+}
+
+function uncomment_line {
+    uncomment_file=$1
+    uncomment_string=$2
+    sed -i 's/\#'"${uncomment_string}"'/'"${uncomment_string}"'/g' ${uncomment_file}
+}
+
+function check_if_file_exists {
+    target_file=$1
+    if [ ! -f ${target_file} ]; then
+    	echo "Error: ${target_file} does not exist."
+    	exit 1
+    fi
+}
+
+function check_if_ssl_exists {
+    check_if_file_exists "server.crt"
+    check_if_file_exists "server.key"
+}
+
+function check_if_ssl_valid {
+    crtmd5=`openssl x509 -noout -modulus -in server.crt | openssl md5`
+    keymd5=`openssl rsa -noout -modulus -in server.key | openssl md5`
+    if [ "$crtmd5" == "$keymd5" ]; then
+        echo "SSL is valid."
+    else
+        echo "Error: SSL is invalid."
+        exit 1
+    fi
+}
+
+function update_check {
+    yum update -y
+}
+
+function install_dovecot {
+    yum install dovecot -y
+    chkconfig dovecot on
+    restart_service dovecot
+}
+
+function install_postfix {
+    file="/etc/yum.repos.d/CentOS-Base.repo"
+    copy_backup ${file}
+    sed -i 's/name=CentOS-\$releasever - Base/name=CentOS-\$releasever - Base\nexclude=postfix/g' ${file}
+    sed -i 's/name=CentOS-\$releasever - Updates/name=CentOS-\$releasever - Updates\nexclude=postfix/g' ${file}
+    yum --enablerepo=centosplus install postfix -y
+    chkconfig postfix on
+    restart_service postfix
+}
+
+
+
+function postfix_configuration {
+    hostname=$1
+    mydomain=$2
+    # main.cf configuration
+    file="/etc/postfix/main.cf"
+    move_backup ${file}
+    #wget -O ${file} "${main_url}/main.cf"
+    wget_file ${file} "postfix/main.cf"
+    sed -i 's/mail.lks.club/'${hostname}'/g' ${file}
+    sed -i 's/lks.club/'${mydomain}'/g' ${file}
+    #sed -i 's/\#myorigin = \$mydomain/myorigin = \$mydomain/g' ${file}
+    #sed -i 's/\#inet_interfaces = all/inet_interfaces = all/g' ${file}
+    #sed -i 's/inet_interfaces = localhost/#inet_interfaces = localhost/g' ${file}
+    #sed -i 's/\#home_mailbox = Maildir\//home_mailbox = Maildir\//g' ${file}
+
+    #add virtual user
+    adduser vpostfix
+    usermod -s /sbin/nologin vpostfix
+    vuid=`grep vpostfix /etc/passwd | awk -F':' '{ print $3 }'`
+    vgid=`grep vpostfix /etc/passwd | awk -F':' '{ print $4 }'`
+    sed -i 's/500/'${vuid}'/g' ${file}
+    sed -i 's/502/'${vgid}'/g' ${file}
+    #echo '# Virtual domain config' >> ${file}
+    #echo 'virtual_mailbox_domains = /etc/postfix/virtual_domains' >> ${file}
+    #echo 'virtual_mailbox_base = /var/mail/vhosts' >> ${file}
+    #echo 'virtual_mailbox_maps = hash:/etc/postfix/vmailbox' >> ${file}
+    #echo 'virtual_minimum_uid = '${vuid} >> ${file}
+    #echo 'virtual_maximum_uid = '${vuid} >> ${file}
+    #echo 'virtual_uid_maps = static:'${vuid} >> ${file}
+    #echo 'virtual_gid_maps = static:'${vgid} >> ${file}
+    #echo 'virtual_alias_maps = hash:/etc/postfix/virtual' >> ${file}
+    mkdir -p /var/mail/vhosts
+    chgrp -R vpostfix /var/mail
+    chown -R vpostfix:vpostfix /var/mail/vhosts
+
+    #master.cf configuration
+    file="/etc/postfix/master.cf"
+    move_backup ${file}
+    #wget -O ${file} "${main_url}/main.cf"
+    wget_file ${file} "postfix/master.cf"
+
+    #ssl
+    cp server.key "/etc/postfix/server.key"
+    cp server.crt "/etc/postfix/server.crt"
+}
+
+function dovecot_10-auth_configuration {
+    file="/etc/dovecot/conf.d/10-auth.conf"
+    move_backup ${file}
+    wget_file ${file} "dovecot/conf.d/10-auth.conf"
+    #sed -i 's/\#disable_plaintext_auth = /disable_plaintext_auth = no\n\#disable_plaintext_auth = /g' ${file}
+    #comment_line ${file} "\!include auth-system.conf.ext"
+    #uncomment_line ${file} "\!include auth-passwdfile.conf.ext"
+}
+
+function dovecot_10-logging_configuration {
+    file="/etc/dovecot/conf.d/10-logging.conf"
+    move_backup ${file}
+    wget_file ${file} "dovecot/conf.d/10-logging.conf"
+    #sed -i 's/\#log_path = /log_path = \/var\/log\/dovecot.log\n\#log_path = /g' ${file}
+    #uncomment_line ${file} "auth_verbose = no"
+    #uncomment_line ${file} "auth_debug = no"
+    #uncomment_line ${file} "verbose_ssl = no"
+}
+
+function dovecot_10-mail_configuration {
+    file="/etc/dovecot/conf.d/10-mail.conf"
+    vuid=`grep vpostfix /etc/passwd | awk -F':' '{ print $3 }'`
+    vgid=`grep vpostfix /etc/passwd | awk -F':' '{ print $4 }'`
+    move_backup ${file}
+    wget_file ${file} "dovecot/conf.d/10-mail.conf"
+    sed -i 's/500/'${vuid}'/g' ${file}
+    sed -i 's/502/'${vgid}'/g' ${file}
+    #sed -i 's/\#mail_location =/mail_location = maildir:\/var\/mail\/vhosts\/%d\/%n\n\#mail_location =/g' ${file}
+    #sed -i 's/\#mail_uid =/mail_uid = '"${vuid}"'\n\#mail_uid =/g' ${file}
+    #sed -i 's/\#mail_gid =/mail_gid = '"${vgid}"'\n\#mail_gid =/g' ${file}
+    #sed -i 's/\#mail_privileged_group =/mail_privileged_group = vpostfix\n\#mail_privileged_group =/g' ${file}
+}
+
+function dovecot_10-master_configuration {
+    file="/etc/dovecot/conf.d/10-master.conf"
+    move_backup ${file}
+    wget_file ${file} "dovecot/conf.d/10-master.conf"
+}
+
+function dovecot_10-ssl_configuration {
+    file="/etc/dovecot/conf.d/10-ssl.conf"
+    move_backup ${file}
+    wget_file ${file} "dovecot/conf.d/10-ssl.conf"
+}
+
+function dovecot_configuration {
+    file="/etc/dovecot/dovecot.conf"
+    move_backup ${file}
+    uncomment_line ${file} "protocols = "
+    dovecot_10-auth_configuration
+    dovecot_10-logging_configuration
+    dovecot_10-mail_configuration
+    dovecot_10-master_configuration
+    dovecot_10-ssl_configuration
+    restart_service postfix
+    restart_service dovecot
+}
+
+function update_hash {
+    postmap /etc/postfix/vmailbox
+    postmap /etc/postfix/virtual
+}
+
+function add_new_domain {
+    new_domain=$1
+    if [ "${new_domain}" == "" ]; then
+        echo "Error: domain name cannot be blank."
+        exit 1
+    fi
+    check_domain=`cat /etc/postfix/virtual_domains | grep ^${new_domain}`
+    if [ "${check_domain}" == "" ]; then
+        echo ${new_domain} > /etc/postfix/virtual_domains
+        echo "DOMAIN ${new_domain} is added."
+        #mkdir -p /var/mail/vhosts/${new_domain}
+        #chown -R vpostfix:vpostfix /var/mail/vhosts/${new_domain}
+    #else
+        #echo "DOMAIN ${new_domain} exists now."
+    fi
+}
+
+function add_new_user {
+    vmailbox_file="/etc/postfix/vmailbox"
+    passwd_file="/etc/dovecot/users"
+    new_user=$1
+    new_domain=$2
+    passwd=$3
+    if [ "${new_user}" == "" ]; then
+        echo ${new_user}
+        echo "Error: Username cannot be blank."
+        exit 1
+    fi
+    if [ "${new_domain}" == "" ]; then
+        echo "Error: Domain Name cannot be blank."
+        exit 1
+    fi
+    add_new_domain ${new_domain}
+    if [ "${passwd}" == "" ]; then
+        echo "Error: Password cannot be blank."
+        exit 1
+    fi
+    check_users=`cat ${vmailbox_file} | grep ^${new_user}@${new_domain}`
+    if [ "${check_users}" == "" ]; then
+        echo "${new_user}@${new_domain} ${new_domain}/${new_user}/" >> ${vmailbox_file}
+        echo ${passwd} > /root/.tmp_passwd
+        echo ${passwd} >> /root/.tmp_passwd
+        hashed_passwd=`cat /root/.tmp_passwd | doveadm pw -s SHA512-CRYPT`
+        rm -f /root/.tmp_passwd
+        echo "${new_user}@${new_domain}:${hashed_passwd}::::" >> ${passwd_file}
+        update_hash
+        echo "USER ${new_user}@${new_domain} is added."
+    else
+        echo "USER ${new_user}@${new_domain} exists now."
+    fi
+}
+
+function open_port {
+    #imap
+    iptables -I INPUT -p tcp -m tcp --dport 143 -j ACCEPT
+    iptables -I INPUT -p tcp -m tcp --dport 993 -j ACCEPT
+    #pop3
+    iptables -I INPUT -p tcp -m tcp --dport 110 -j ACCEPT
+    iptables -I INPUT -p tcp -m tcp --dport 995 -j ACCEPT
+    #smtp
+    iptables -I INPUT -p tcp -m tcp --dport 25 -j ACCEPT
+    iptables -I INPUT -p tcp -m tcp --dport 465 -j ACCEPT
+    iptables -I INPUT -p tcp -m tcp --dport 587 -j ACCEPT
+    service iptables save
+    restart_service iptables
+}
+
+function install {
+    hostname=$1
+    mydomain=$2
+    #check if install
+    if [ -f ${rcat_mail_system} ]; then
+        echo "RCAT Mail System is already installed."
+        exit 1
+    fi
+    #ssl
+    check_if_ssl_exists
+    check_if_ssl_valid
+    #ask for hostname
+    while [ "${hostname}" == "" ]
+    do
+    	read -p "Hostname: " hostname
+    	if [ "${hostname}" == "" ]; then
+    		echo "Error: Hostname can't be empty!!"
+    	fi
+    done
+    #ask for hostname
+    while [ "${mydomain}" == "" ]
+    do
+    	read -p "Default domain: " mydomain
+    	if [ "${mydomain}" == "" ]; then
+    		echo "Error: Default domain can't be empty!!"
+    	fi
+    done
+    #install mail system
+    update_check
+    install_postfix
+    install_dovecot
+    postfix_configuration ${hostname} ${mydomain}
+    dovecot_configuration
+    open_port
+    mkdir /etc/rcat
+    cp $0 ${rcat_mail_system}
+    ln -s ${rcat_mail_system} /usr/bin/rcat_mail_system
+    ln -s ${rcat_mail_system} /usr/bin/rcat_mail_system
+    ln -s ${rcat_mail_system} ~/rcat_mail_system
+    finish_info
+}
+
+function start_installation {
+    #start information
+    clear
+    echo ""
+    echo "RCAT Mail System installation panel"
+    echoline
+    echo "RCAT Mail System is a yum based solution for mail system installation."
+    echo "For more information, please visit our website http://rcat.gidcs.net/."
+    echo ""
+    echo "Press Ctrl+C to cancel it."
+    echo "Any key to continue the installation."
+    echo "Please make sure the {server.key} and {server.crt} are at the same directory."
+    echoline
+    read -n 1
+    install
+}
+
+function start_management {
+    #start information
+    clear
+    echo ""
+    echo "RCAT Mail System management panel"
+    echoline
+    echo "RCAT Mail System is a yum based solution for mail system installation."
+    echo "For more information, please visit our website http://rcat.gidcs.net/."
+    echo ""
+    echo "1. add a new mail account"
+    echo "2. delete a existed mail account"
+    echo "3. changing password of a existed mail account"
+    echoline
+}
+
+function finish_info {
+    #installation finish
+    clear
+    echo ""
+    echo "RCAT Mail System installation panel"
+    echoline
+    echo "RCAT Mail System is a yum based solution for mail system installation"
+    echo "For more information, please visit our website http://rcat.gidcs.net/"
+    echo ""
+    echo 'You can manage your mail account with "rcat_mail_system".'
+    echoline
+    echo ""
+}
+
+function help_info {
+    #installation finish
+    echo ""
+    echo "RCAT Mail System helping panel"
+    echoline
+    echo "RCAT Mail System is a yum based solution for mail system installation"
+    echo "For more information, please visit our website http://rcat.gidcs.net/"
+    echo ""
+    echo 'You can install or manage your mail account with "rcat_mail_system".'
+    echo "rcat_mail_system -i {hostname} {default_domain} for quick installation."
+    echo "rcat_mail_system -a {username} {password} for quick adding account ."
+    echo "rcat_mail_system -m {username} {password} for quick modifying password."
+    echo "rcat_mail_system -d {username} for quick deleting account."
+    echo "Note: {username} will be appended with {default_domain} if no any"
+    echo "      domain_name exists."
+    echoline
+    echo ""
+}
+
+function add_mail_account {
+    username=$1
+    password=$2
+    #ask for username
+    while [ "${username}" == "" ]
+    do
+    	read -p "Username: " username
+    	if [ "${username}" == "" ]; then
+    		echo "Error: Username can't be empty!!"
+    	fi
+    done
+    #ask for password
+    while [ "${password}" == "" ]
+    do
+    	read -p "Password: " password
+    	if [ "${password}" == "" ]; then
+    		echo "Error: Password can't be empty!!"
+    	fi
+    done
+    domain_name=`echo ${username} | awk -F'@' '{ print $2 }'`
+    if [ "${domain_name}" == "" ]; then
+        domain_name=`cat /etc/postfix/main.cf | grep ^mydomain | awk '{ print $3 }'`
+    fi
+    username=`echo ${username} | awk -F'@' '{ print $1 }'`
+    add_new_user ${username} ${domain_name} ${password}
+}
+
+function del_mail_account {
+    vmailbox_file="/etc/postfix/vmailbox"
+    passwd_file="/etc/dovecot/users"
+    username=$1
+    #ask for username
+    while [ "${username}" == "" ]
+    do
+    	read -p "Username: " username
+    	if [ "${username}" == "" ]; then
+    		echo "Error: Username can't be empty!!"
+    	fi
+    done
+    domain_name=`echo ${username} | awk -F'@' '{ print $2 }'`
+    if [ "${domain_name}" == "" ]; then
+        domain_name=`cat /etc/postfix/main.cf | grep ^mydomain | awk '{ print $3 }'`
+        username="${username}@${domain_name}"
+    fi
+    check_users=`cat ${passwd_file} | awk -vusername=${username} -F':' '{ if ($1==username) print NR }'`
+    if [ "${check_users}" == "" ]; then
+        echo "${username} does not exist."
+    else
+        copy_backup ${passwd_file}
+        sed -i "${check_users}"'d' ${passwd_file}
+        copy_backup ${vmailbox_file}
+        check_users=`cat ${vmailbox_file} | awk -vusername=${username} '{ if ($1==username) print NR }'`
+        sed -i "${check_users}"'d' ${vmailbox_file}
+        update_hash
+        echo "${username} is deleted."
+    fi
+}
+
+function change_password {
+    passwd_file="/etc/dovecot/users"
+    username=$1
+    password=$2
+    #ask for username
+    while [ "${username}" == "" ]
+    do
+    	read -p "Username: " username
+    	if [ "${username}" == "" ]; then
+    		echo "Error: Username can't be empty!!"
+    	fi
+    done
+    domain_name=`echo ${username} | awk -F'@' '{ print $2 }'`
+    if [ "${domain_name}" == "" ]; then
+        domain_name=`cat /etc/postfix/main.cf | grep ^mydomain | awk '{ print $3 }'`
+        username="${username}@${domain_name}"
+    fi
+    #ask for password
+    while [ "${password}" == "" ]
+    do
+    	read -p "Password: " password
+    	if [ "${password}" == "" ]; then
+    		echo "Error: Password can't be empty!!"
+    	fi
+    done
+    check_users=`cat ${passwd_file} | awk -vusername=${username} -F':' '{ if ($1==username) print NR }'`
+    if [ "${check_users}" == "" ]; then
+        echo "${username} does not exist."
+    else
+        echo ${password} > /root/.tmp_passwd
+        echo ${password} >> /root/.tmp_passwd
+        hashed_passwd=`cat /root/.tmp_passwd | doveadm pw -s SHA512-CRYPT`
+        rm -f /root/.tmp_passwd
+        copy_backup ${passwd_file}
+        sed -i "${check_users}"'d' ${passwd_file}
+        echo "${username}:${hashed_passwd}::::" >> ${passwd_file}
+        update_hash
+        echo "Password of ${username} is modified."
+    fi
+}
+
+
+function start_menu {
+    start_management
+    read -p "Please input your choice: " choice
+    case "$choice" in
+    	1) add_mail_account
+    		;;
+    	2) del_mail_account
+    		;;
+        3) change_password
+        	;;
+    	*) echo "exit"
+    		;;
+    esac
+}
+
+check_if_root
+check_if_centos
+#check if install
+if [ ! -f ${rcat_mail_system} ]; then
+    start_installation
+else
+    case "$1" in
+        "-i") install $2 $3
+    		;;
+    	"-a") add_mail_account $2 $3
+    		;;
+    	"-d") del_mail_account $2
+    		;;
+        "-m") change_password $2 $3
+        	;;
+        "-h") help_info
+            ;;
+    	*) start_menu
+    		;;
+    esac
+fi

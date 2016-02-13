@@ -1,2 +1,71 @@
-# RCAT-Mail-System
+RCAT-Mail-System
+====================
+
+This is the public repository for [RCAT-Mail-System].
+
 RCAT Mail System is a yum based solution for mail system installation.
+
+RCAT Mail System can be installed by one-key installation script, all configuration will be setup automatically including the SSL/TLS and STARTTLS support for SMTPs/IMAPs/POP3s.
+
+RCAT has a simple management panel to manage your mail server, therefore you can create account, delete account, and modify password easily.
+
+After creating account, you can connect to your mail server via any mail client.
+
+Environment:
+- vps/dedicated server which support rdns
+- centos 6
+- iptables
+- postfix (will be installed)
+- dovecot (will be installed)
+- server.crt, server.key
+
+Note:
+- This system will be updated with advanced configuration like anti-spam if I have free time. XD
+
+Installation
+-------
+### basic installation
+    cd /root;
+    wget -O rcat_mail_system https://raw.githubusercontent.com/gidcs/RCAT-Mail-System/master/rcat_mail_system;
+    chmod 755 rcat_mail_system;
+    ./rcat_mail_system
+
+### quick installation
+    cd /root;
+    wget -O rcat_mail_system https://raw.githubusercontent.com/gidcs/RCAT-Mail-System/master/rcat_mail_system;
+    chmod 755 rcat_mail_system;
+    ./rcat_mail_system -i {hostname} {default_domain}
+
+Help Information
+-------
+### quick installation
+    rcat_mail_system -i {hostname} {default_domain}
+
+### quick adding account
+    rcat_mail_system -a {username} {password}
+
+### quick modifying password
+    rcat_mail_system -m {username} {password}
+
+### quick deleting account
+    rcat_mail_system -d {username}
+
+License
+-------
+
+Copyright 2015 [guyusoftware]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+[guyusoftware]: https://www.guyusoftware.com/
+[RCAT-Mail-System]: http://rcat.gidcs.net/rcat-mail-system
