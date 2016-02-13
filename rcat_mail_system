@@ -225,7 +225,7 @@ function dovecot_10-ssl_configuration {
 
 function dovecot_configuration {
     file="/etc/dovecot/dovecot.conf"
-    move_backup ${file}
+    copy_backup ${file}
     uncomment_line ${file} "protocols = "
     dovecot_10-auth_configuration
     dovecot_10-logging_configuration
