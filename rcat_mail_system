@@ -100,6 +100,11 @@ function check_if_ssl_valid {
         echo "Error: Key is invalid."
         exit 1
     fi
+    if_same=`diff -q server.crt server.key`
+    if [ "${if_same}" != "" ]; then
+        echo "Error: CRT and Key are same file."
+        exit 1
+    fi
     crtmd5=`echo ${crtstring} | openssl md5`
     keymd5=`echo ${keystring} | openssl md5`
     if [ "${crtmd5}" == "${keymd5}" ]; then
