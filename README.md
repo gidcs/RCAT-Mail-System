@@ -28,13 +28,13 @@ Installation
     cd /root;
     wget -O rcat_mail_system https://raw.githubusercontent.com/gidcs/RCAT-Mail-System/master/rcat_mail_system;
     chmod 755 rcat_mail_system;
-    ./rcat_mail_system
+    ./rcat_mail_system | tee rcat_mail_system.log
 
 ### quick installation
     cd /root;
     wget -O rcat_mail_system https://raw.githubusercontent.com/gidcs/RCAT-Mail-System/master/rcat_mail_system;
     chmod 755 rcat_mail_system;
-    ./rcat_mail_system -i {hostname} {default_domain}
+    ./rcat_mail_system -i {hostname} {default_domain} | tee rcat_mail_system.log
 
 Help Information
 -------
