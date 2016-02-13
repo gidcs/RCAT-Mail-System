@@ -176,6 +176,10 @@ function postfix_configuration {
     #ssl
     cp server.key "/etc/postfix/server.key"
     cp server.crt "/etc/postfix/server.crt"
+
+    # touch file
+    touch /etc/postfix/virtual_domains
+    touch /etc/postfix/vmailbox
 }
 
 function dovecot_10-auth_configuration {
@@ -232,6 +236,7 @@ function dovecot_configuration {
     dovecot_10-mail_configuration
     dovecot_10-master_configuration
     dovecot_10-ssl_configuration
+    touch /etc/dovecot/users
     restart_service postfix
     restart_service dovecot
 }
