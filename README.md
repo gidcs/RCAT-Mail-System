@@ -15,6 +15,7 @@ Environment:
 - vps/dedicated server which support rdns
 - centos 6
 - iptables
+- OpenSSL 1.0.1e-fips 11 Feb 2013 or newer
 - postfix (will be installed)
 - dovecot (will be installed)
 - server.crt, server.key
@@ -25,16 +26,16 @@ Note:
 Installation
 -------
 ### basic installation
-    cd /root;
+    yum update -y;
     wget -O rcat_mail_system https://raw.githubusercontent.com/gidcs/RCAT-Mail-System/master/rcat_mail_system;
     chmod 755 rcat_mail_system;
-    ./rcat_mail_system | tee rcat_mail_system.log
+    ./rcat_mail_system 2>&1 | tee rcat_mail_system.log
 
 ### quick installation
-    cd /root;
+    yum update -y;
     wget -O rcat_mail_system https://raw.githubusercontent.com/gidcs/RCAT-Mail-System/master/rcat_mail_system;
     chmod 755 rcat_mail_system;
-    ./rcat_mail_system -i {hostname} {default_domain} | tee rcat_mail_system.log
+    ./rcat_mail_system -i {hostname} {default_domain} 2>&1 | tee rcat_mail_system.log
 
 Help Information
 -------
