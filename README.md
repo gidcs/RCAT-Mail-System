@@ -16,13 +16,17 @@ Environment:
 - Centos 6
 - Iptables
 - Wget 1.12 or newer
-- Postfix (will be installed)
-- Dovecot (will be installed)
-- Postgrey (will be installed)
-- rpmforge-release (will be installed)
-- epel-release (will be installed)
-- postfix-policyd-spf-perl (will be installed)
 - server.crt, server.key
+
+Package will be installed:
+- Postfix
+- Dovecot
+- Postgrey
+- Spamassassin
+- rpmforge-release
+- epel-release
+- postfix-policyd-spf-perl
+
 
 Note:
 - This system will be updated with advanced configuration like anti-spam if I have free time. XD
