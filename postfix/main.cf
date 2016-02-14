@@ -684,7 +684,7 @@ virtual_mailbox_maps = hash:/etc/postfix/vmailbox
 virtual_minimum_uid = 500
 virtual_maximum_uid = 500
 virtual_uid_maps = static:500
-virtual_gid_maps = static:500
+virtual_gid_maps = static:502
 virtual_alias_maps = hash:/etc/postfix/virtual
 
 # TLS
