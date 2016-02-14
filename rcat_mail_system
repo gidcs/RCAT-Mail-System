@@ -152,8 +152,7 @@ function install_epel-release {
 }
 
 function install_postfix-policyd-spf-perl {
-    yum install perl-Mail-SPF -y
-    yum install perl-Sys-Hostname-Long -y
+    yum install perl-Mail-SPF perl-Sys-Hostname-Long -y
     wget -c https://launchpad.net/postfix-policyd-spf-perl/trunk/release2.010/+download/postfix-policyd-spf-perl-2.010.tar.gz
     tar xzf postfix-policyd-spf-perl-2.010.tar.gz
     mkdir /usr/lib/postfix
@@ -167,6 +166,17 @@ function install_postgrey {
     chkconfig postgrey on
     restart_service postgrey
     restart_service postfix
+}
+
+function install_spamassassin {
+    file="/etc/sysconfig/spamassassin"
+    yum install spamassassin -y
+    groupadd spamfilter
+    useradd -g spamfilter -s /bin/false -d /usr/local/spamassassin spamfilter
+    move_backup ${file}
+    wget_file ${file} "spamassassin/spamassassin.sysconfig"
+    chkconfig spamassassin on
+    restart_service spamassassin
 }
 
 function postfix_configuration {
@@ -391,6 +401,7 @@ function install {
     install_postgrey
     install_epel-release
     install_postfix-policyd-spf-perl
+    install_spamassassin
     postfix_configuration ${hostname} ${mydomain}
     dovecot_configuration
     open_port

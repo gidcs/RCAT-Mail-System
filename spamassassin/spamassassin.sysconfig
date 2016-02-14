@@ -1,0 +1,5 @@
+# Options to spamd
+SAHOME="/usr/local/spamassassin"
+SPID_DIR="/var/run/spamassassin"
+SUSER="spamfilter"
+SPAMDOPTIONS="-d -c -m5 --username ${SUSER} -H ${SAHOME} -s ${SAHOME}/spamfilter.log"

@@ -84,3 +84,4 @@ Log
 ### 2016-02-14
     Real-time Blackhole List (RBL) and Postgrey is added.
     Policy engine SPF checking postfix-policyd-spf-perl is added.
+    Spamassassin is added.
