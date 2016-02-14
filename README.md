@@ -78,6 +78,9 @@ limitations under the License.
 Log
 -------
 
-2016-02-13 RCAT-Mail-System(Postfix+Dovecot) release.
-2016-02-14 Real-time Blackhole List (RBL) and Postgrey is added.
-2016-02-14 Policy engine SPF checking postfix-policyd-spf-perl is added.
+2016-02-13
+    RCAT-Mail-System(Postfix+Dovecot) release.
+
+2016-02-14
+    Real-time Blackhole List (RBL) and Postgrey is added.
+    Policy engine SPF checking postfix-policyd-spf-perl is added.
