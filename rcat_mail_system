@@ -147,6 +147,20 @@ function install_rpmforge-release {
     fi
 }
 
+function install_epel-release {
+    yum install epel-release -y
+}
+
+function install_postfix-policyd-spf-perl {
+    yum install perl-Mail-SPF -y
+    yum install perl-Sys-Hostname-Long -y
+    wget -c https://launchpad.net/postfix-policyd-spf-perl/trunk/release2.010/+download/postfix-policyd-spf-perl-2.010.tar.gz
+    tar xzf postfix-policyd-spf-perl-2.010.tar.gz
+    mkdir /usr/lib/postfix
+    cp postfix-policyd-spf-perl-2.010/postfix-policyd-spf-perl /usr/lib/postfix/postfix-policyd-spf-perl
+    rm -rf postfix-policyd-spf-perl-2.010*
+}
+
 function install_postgrey {
     yum install postgrey -y
     echo 'OPTIONS="--unix=/var/spool/postfix/postgrey/socket --delay=60"' > /etc/sysconfig/postgrey
@@ -375,6 +389,8 @@ function install {
     install_dovecot
     install_rpmforge-release
     install_postgrey
+    install_epel-release
+    install_postfix-policyd-spf-perl
     postfix_configuration ${hostname} ${mydomain}
     dovecot_configuration
     open_port

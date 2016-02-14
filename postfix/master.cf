@@ -102,3 +102,5 @@ scache    unix  -       -       n       -       1       scache
 #mailman   unix  -       n       n       -       -       pipe
 #  flags=FR user=list argv=/usr/lib/mailman/bin/postfix-to-mailman.py
 #  ${nexthop} ${user}
+policy-spf    unix  -       n       n       -       0       spawn
+    user=nobody argv=/usr/bin/perl /usr/lib/postfix/postfix-policyd-spf-perl

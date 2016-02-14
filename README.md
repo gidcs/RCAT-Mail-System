@@ -19,7 +19,9 @@ Environment:
 - Postfix (will be installed)
 - Dovecot (will be installed)
 - Postgrey (will be installed)
-- Rpmforge-release (will be installed)
+- rpmforge-release (will be installed)
+- epel-release (will be installed)
+- postfix-policyd-spf-perl (will be installed)
 - server.crt, server.key
 
 Note:
@@ -72,3 +74,10 @@ limitations under the License.
 
 [guyusoftware]: https://www.guyusoftware.com/
 [RCAT-Mail-System]: http://rcat.gidcs.net/rcat-mail-system
+
+Log
+-------
+
+2016-02-13 RCAT-Mail-System(Postfix+Dovecot) release.
+2016-02-14 Real-time Blackhole List (RBL) and Postgrey is added.
+2016-02-14 Policy engine SPF checking postfix-policyd-spf-perl is added.
