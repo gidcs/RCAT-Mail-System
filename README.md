@@ -18,6 +18,8 @@ Environment:
 - Wget 1.12 or newer
 - Postfix (will be installed)
 - Dovecot (will be installed)
+- Postgrey (will be installed)
+- Rpmforge-release (will be installed)
 - server.crt, server.key
 
 Note:

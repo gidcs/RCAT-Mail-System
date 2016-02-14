@@ -57,7 +57,7 @@ function move_backup {
 function wget_file {
     target_file=$1
     req_file=$2
-    wget -O ${target_file} "${main_url}/${req_file}"
+    wget -O ${target_file} -c "${main_url}/${req_file}"
     if [ ! -f ${target_file} ]; then
     	echo "Error: ${target_file} download failed."
     	exit 1
@@ -130,7 +130,30 @@ function install_postfix {
     restart_service postfix
 }
 
+function install_rpmforge-release {
+    arch=`uname -i`
+    if [ "${arch}" == "x86_64" ]; then
+        wget -c "http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.i686.rpm"
+        rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt
+        rpm -i rpmforge-release-0.5.3-1.el6.rf.*.rpm
+        rm -f rpmforge-release-0.5.3-1.el6.rf.*.rpm
+    else if [ "${arch}" == "i686" ]; then
+        wget -c "http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm"
+        rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt
+        rpm -i rpmforge-release-0.5.3-1.el6.rf.*.rpm
+        rm -f rpmforge-release-0.5.3-1.el6.rf.*.rpm
+    else
+        echo "rpmforge-release cannot be installed in ${arch}."
+    fi
+}
 
+function install_postgrey {
+    yum install postgrey -y
+    echo 'OPTIONS="--unix=/var/spool/postfix/postgrey/socket --delay=60"' > /etc/sysconfig/postgrey
+    chkconfig postgrey on
+    restart_service postgrey
+    restart_service postfix
+}
 
 function postfix_configuration {
     hostname=$1
@@ -350,6 +373,8 @@ function install {
     update_check
     install_postfix
     install_dovecot
+    install_rpmforge-release
+    install_postgrey
     postfix_configuration ${hostname} ${mydomain}
     dovecot_configuration
     open_port
