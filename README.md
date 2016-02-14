@@ -12,12 +12,12 @@ RCAT has a simple management panel to manage your mail server, therefore you can
 After creating account, you can connect to your mail server via any mail client.
 
 Environment:
-- vps/dedicated server which support rdns
-- centos 6
-- iptables
-- OpenSSL 1.0.1e-fips 11 Feb 2013 or newer
-- postfix (will be installed)
-- dovecot (will be installed)
+- VPS/Dedicated server which support rdns
+- Centos 6
+- Iptables
+- Wget 1.12 or newer
+- Postfix (will be installed)
+- Dovecot (will be installed)
 - server.crt, server.key
 
 Note:
@@ -26,13 +26,13 @@ Note:
 Installation
 -------
 ### basic installation
-    yum update openssl -y;
+    yum update wget -y;
     wget -O rcat_mail_system https://raw.githubusercontent.com/gidcs/RCAT-Mail-System/master/rcat_mail_system;
     chmod 755 rcat_mail_system;
     ./rcat_mail_system 2>&1 | tee rcat_mail_system.log
 
 ### quick installation
-    yum update openssl -y;
+    yum update wget -y;
     wget -O rcat_mail_system https://raw.githubusercontent.com/gidcs/RCAT-Mail-System/master/rcat_mail_system;
     chmod 755 rcat_mail_system;
     ./rcat_mail_system -i {hostname} {default_domain} 2>&1 | tee rcat_mail_system.log
