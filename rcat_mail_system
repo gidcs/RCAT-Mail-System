@@ -545,11 +545,16 @@ check_if_root
 check_if_centos
 #check if install
 if [ ! -f ${rcat_mail_system} ]; then
-    start_installation
-else
     case "$1" in
         "-i") install $2 $3
-    		;;
+            ;;
+        "-h") help_info
+            ;;
+        *) start_installation
+            ;;
+    esac
+else
+    case "$1" in
     	"-a") add_mail_account $2 $3
     		;;
     	"-d") del_mail_account $2
