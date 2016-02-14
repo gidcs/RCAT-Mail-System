@@ -137,7 +137,7 @@ function install_rpmforge-release {
         rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt
         rpm -i rpmforge-release-0.5.3-1.el6.rf.*.rpm
         rm -f rpmforge-release-0.5.3-1.el6.rf.*.rpm
-    else if [ "${arch}" == "i686" ]; then
+    elif [ "${arch}" == "i686" ]; then
         wget -c "http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.3-1.el6.rf.x86_64.rpm"
         rpm --import http://apt.sw.be/RPM-GPG-KEY.dag.txt
         rpm -i rpmforge-release-0.5.3-1.el6.rf.*.rpm
