@@ -301,7 +301,7 @@ function add_new_domain {
     fi
     check_domain=`cat /etc/postfix/virtual_domains | grep ^${new_domain}`
     if [ "${check_domain}" == "" ]; then
-        echo ${new_domain} > /etc/postfix/virtual_domains
+        echo ${new_domain} >> /etc/postfix/virtual_domains
         echo "DOMAIN ${new_domain} is added."
         #mkdir -p /var/mail/vhosts/${new_domain}
         #chown -R vpostfix:vpostfix /var/mail/vhosts/${new_domain}
