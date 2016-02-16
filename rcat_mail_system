@@ -182,6 +182,10 @@ function install_spamassassin {
     useradd -g spamfilter -s /bin/false -d /usr/local/spamassassin spamfilter
     move_backup ${file}
     wget_file ${file} "spamassassin/spamassassin.sysconfig"
+    file="/etc/mail/spamassassin/Chinese_rules_UTF8.cf"
+    wget_file ${file} "spamassassin/Chinese_rules_UTF8.cf"
+    file="/etc/mail/spamassassin/Chinese_rules_GB2312.cf"
+    wget_file ${file} "spamassassin/Chinese_rules_GB2312.cf"
     chkconfig spamassassin on
     restart_service spamassassin
 }
