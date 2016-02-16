@@ -130,6 +130,13 @@ function install_postfix {
     restart_service postfix
 }
 
+function install_procmail {
+    # make sure it's installed.
+    yum install procmail -y
+    file="/etc/procmailrc"
+    wget_file ${file} "procmail/procmailrc"
+}
+
 function install_rpmforge-release {
     arch=`uname -i`
     if [ "${arch}" == "x86_64" ]; then
@@ -407,6 +414,7 @@ function install {
     #install mail system
     update_check
     install_postfix
+    install_procmail
     install_dovecot
     install_rpmforge-release
     install_postgrey

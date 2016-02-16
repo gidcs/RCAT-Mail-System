@@ -1,0 +1,15 @@
+PATH = /bin:/usr/bin:/usr/local/bin
+DEFAULTDIR=/var/mail/vhosts/${ER_DOMAIN}/${ER_USER}
+DEFAULT=$DEFAULTDIR/
+SPAM=$DEFAULTDIR/.Junk/
+LOGFILE = /var/log/procmail.log
+
+# Procmail rule to filter spam to SPAM folder
+:0:
+* ^X-Spam-Status: Yes
+$SPAM
+
+# Procmail rule to delete spam
+#:0:
+#* ^X-Spam-Status: Yes
+#/dev/null
