@@ -726,3 +726,7 @@ smtpd_recipient_restrictions = permit_sasl_authenticated,
 							   check_policy_service unix:postgrey/socket
 
 policy_time_limit = 3600
+
+# procmail for virtual users
+virtual_transport = virtualprocmail:dummy
+virtualprocmail_destination_recipient_limit = 1

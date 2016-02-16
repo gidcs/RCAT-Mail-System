@@ -227,6 +227,10 @@ function postfix_configuration {
     # touch file
     touch /etc/postfix/virtual_domains
     touch /etc/postfix/vmailbox
+
+    # procmail
+    touch /var/log/procmail.log
+    chown vpostfix:vpostfix /var/log/procmail.log
 }
 
 function dovecot_10-auth_configuration {
@@ -274,6 +278,12 @@ function dovecot_10-ssl_configuration {
     wget_file ${file} "dovecot/conf.d/10-ssl.conf"
 }
 
+function dovecot_20-imap_configuration {
+    file="/etc/dovecot/conf.d/20-imap.conf"
+    move_backup ${file}
+    wget_file ${file} "dovecot/conf.d/20-imap.conf"
+}
+
 function dovecot_configuration {
     file="/etc/dovecot/dovecot.conf"
     copy_backup ${file}
@@ -283,6 +293,7 @@ function dovecot_configuration {
     dovecot_10-mail_configuration
     dovecot_10-master_configuration
     dovecot_10-ssl_configuration
+    dovecot_20-imap_configuration
     touch /etc/dovecot/users
     restart_service postfix
     restart_service dovecot

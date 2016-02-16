@@ -20,6 +20,7 @@ Environment:
 
 Package will be installed:
 - Postfix
+- Procmail
 - Dovecot
 - Postgrey
 - Spamassassin
@@ -89,3 +90,10 @@ Log
     Real-time Blackhole List (RBL) and Postgrey is added.
     Policy engine SPF checking postfix-policyd-spf-perl is added.
     Spamassassin is added.
+
+### 2016-02-15
+    Fix bug of multiple domains.
+
+### 2016-02-16
+    IMAP auto subscribe folders including Junk, Sent, Trash.
+    Procmail spams moving feature for virtual users is added.

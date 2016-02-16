@@ -109,3 +109,7 @@ policy-spf    unix  -    n       n       -       0       spawn
     user=nobody argv=/usr/bin/perl /usr/lib/postfix/postfix-policyd-spf-perl
 spamassassin  unix  -    n       n       -       -       pipe
     user=spamfilter argv=/usr/bin/spamc -f -e  /usr/sbin/sendmail -oi -f ${sender} ${recipient}
+virtualprocmail unix -   n       n       -       -       pipe
+    flags=DRXhuq user=vpostfix argv=/usr/bin/procmail
+    -m E_SENDER=$sender E_RECIPIENT=$recipient ER_USER=$user ER_DOMAIN=$domain
+    ER_DETAIL=$extension NEXTHOP=$nexthop /etc/procmailrc
